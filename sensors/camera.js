@@ -1,27 +1,34 @@
 let RaspiCam = require('raspicam');
-let currTime = new Date().getTime(); //to store file with timestamp
 
-let logPath = '../logs/' + currTime + '.png' ; //photo path
+class Camera  {
+	constructor(width, height, path) { 
+		let opts =  {
+			mode: 'photo',    // photo mode
+			encoding: 'png',  // png format
+			width: width,	//width 
+			height: height,	//height
+			output: path,
+			timeout: 0 	//no delays
+		};
+		this.path = path;
 
-let opts =  {
-	mode: 'photo',    // photo mode
-	encoding: 'png',  // png format
-	width: 250,	//width 
-	height: 250,	//height
-	output: logPath, //storage path
-	timeout: 0 	//no delays
-};
+		this.camera = new RaspiCam(opts); //call constructor
 
-let camera = new RaspiCam(opts); //call constructor
+		this.camera.on('start', (err,timestamp)=> console.log(`Starting camera`));
 
-camera.on('start', (err,timestamp)=> console.log(`Starting camera`));
+		this.camera.on('read', (err,timestamp, filename)=> { 	
+			console.log(`Stopping the camera`);
+			this.camera.stop();
+		});
+		this.camera.on('exit', (timestamp)=> console.log('Done, Suspending the camera'));
+	}
 
-camera.on('read', (err,timestamp, filename)=> { 	
-	console.log(`Stopping the camera`);
-	camera.stop();
-});
-camera.on('exit', (timestamp)=> console.log('Done, Suspending the camera'));
+	clickPhoto() { 
+		let currTime = new Date().getTime();
+		this.camera.set('output', this.path + '/' + currTime + '.png');
+		this.camera.start();
+	}
 
-//camera.start(); // to start camera
-
-module.exports = camera //export camera
+	
+}
+module.exports = Camera //export camera
